@@ -1,0 +1,170 @@
+
+
+pip install pygame
+
+
+# In[62]:
+
+
+import pygame
+import random
+
+# Initialize pygame
+pygame.init()
+
+# Set up the game window
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Block Breaker Game")
+
+# Define colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+# Set up game objects
+paddle_width = 100
+paddle_height = 15
+paddle = pygame.Rect(WIDTH // 2 - paddle_width // 2, HEIGHT - 50, paddle_width, paddle_height)
+
+ball_radius = 10
+ball = pygame.Rect(WIDTH // 2 - ball_radius, HEIGHT - 60, ball_radius * 2, ball_radius * 2)
+
+# Ball speed and direction
+ball_dx = 4
+ball_dy = -4
+ball_active = False  # Ball will not move until SPACE is pressed
+
+# Blocks setup
+block_width = 60
+block_height = 20
+blocks = []
+
+rows = 5
+cols = 10
+
+for i in range(rows):
+    for j in range(cols):
+        block = pygame.Rect(j * (block_width + 10) + 30, i * (block_height + 10) + 30, block_width, block_height)
+        blocks.append(block)
+
+# Paddle speed
+paddle_speed = 10
+
+# Game loop flag
+running = True
+clock = pygame.time.Clock()
+
+# Function to draw objects on the screen
+def draw_objects():
+    screen.fill(BLACK)
+    pygame.draw.rect(screen, WHITE, paddle)
+    pygame.draw.ellipse(screen, WHITE, ball)
+    pygame.draw.rect(screen, RED, ball)
+    
+    for block in blocks:
+        pygame.draw.rect(screen, BLUE, block)
+    
+    pygame.display.flip()
+
+# Function to move the ball
+def move_ball():
+    global ball_dx, ball_dy
+    ball.x += ball_dx
+    ball.y += ball_dy
+
+    if ball.x <= 0 or ball.x + ball.width >= WIDTH:
+        ball_dx = -ball_dx
+    if ball.y <= 0:
+        ball_dy = -ball_dy
+
+# Function to handle collisions with paddle
+def check_paddle_collision():
+    global ball_dy
+    if paddle.colliderect(ball):
+        ball_dy = -ball_dy
+        ball.x += ball_dx  # Adjust position so the ball is above the paddle
+
+# Function to check collisions with blocks
+def check_block_collisions():
+    global ball_dy
+    for block in blocks[:]:
+        if block.colliderect(ball):
+            blocks.remove(block)
+            ball_dy = -ball_dy
+            break
+
+# Function to move the paddle
+def move_paddle():
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and paddle.left > 0:
+        paddle.x -= paddle_speed
+    if keys[pygame.K_RIGHT] and paddle.right < WIDTH:
+        paddle.x += paddle_speed
+
+# Function for the start screen
+def show_start_screen():
+    screen.fill(BLACK)
+    font = pygame.font.Font(None, 74)
+    text = font.render("Block Breaker", True, WHITE)
+    start_message = pygame.font.Font(None, 36).render("Press SPACE to Start", True, WHITE)
+
+    screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 50))
+    screen.blit(start_message, (WIDTH // 2 - start_message.get_width() // 2, HEIGHT // 2 + 50))
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                waiting = False
+
+# Function to show a "Press SPACE" message before ball starts
+def show_ready_message():
+    font = pygame.font.Font(None, 36)
+    ready_message = font.render("Press SPACE to Launch the Ball", True, WHITE)
+    screen.blit(ready_message, (WIDTH // 2 - ready_message.get_width() // 2, HEIGHT // 2))
+    pygame.display.flip()
+
+# Main game loop
+show_start_screen()
+
+while running:
+    clock.tick(60)  # FPS limit to 60 frames per second
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            ball_active = True  # Activate the ball when SPACE is pressed
+
+    if not ball_active:  # Pause the game until SPACE is pressed
+        draw_objects()
+        show_ready_message()
+    else:
+        move_ball()
+
+    move_paddle()
+    check_paddle_collision()
+    check_block_collisions()
+
+    # Check if the ball is below the screen (game over condition)
+    if ball.y > HEIGHT:
+        print("Game Over!")
+        running = False
+
+    # Draw the game objects
+    draw_objects()
+
+# Quit pygame
+pygame.quit()
+
+
+
+
+
